@@ -10,7 +10,22 @@
 body{font-family:'Noto Sans KR',sans-serif;background:#0F172A;min-height:100vh}
 .bg{position:fixed;inset:0;z-index:0;background:linear-gradient(135deg,#0F172A 0%,#1E3A5F 50%,#0F172A 100%)}
 .bg::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 50%,rgba(46,109,164,.15) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(29,158,117,.1) 0%,transparent 50%);pointer-events:none}
-.page{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:60px 24px 48px}
+
+/* 비밀번호 화면 */
+.lock-screen{position:relative;z-index:1;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.lock-box{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:24px;padding:40px 36px;width:100%;max-width:360px;text-align:center;backdrop-filter:blur(10px)}
+.lock-icon{font-size:40px;margin-bottom:16px}
+.lock-box h2{font-size:20px;font-weight:700;color:#fff;margin-bottom:6px}
+.lock-box p{font-size:13px;color:rgba(255,255,255,.5);margin-bottom:28px}
+.pw-input{width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:13px 16px;font-size:15px;color:#fff;font-family:inherit;outline:none;text-align:center;letter-spacing:.2em;margin-bottom:12px;transition:border-color .2s}
+.pw-input:focus{border-color:rgba(96,165,250,.6)}
+.pw-input::placeholder{letter-spacing:0;color:rgba(255,255,255,.3)}
+.pw-btn{width:100%;background:linear-gradient(135deg,#2E6DA4,#3B82F6);border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit;transition:opacity .2s}
+.pw-btn:hover{opacity:.85}
+.pw-error{font-size:12px;color:#F87171;margin-top:10px;display:none}
+
+/* 메인 화면 */
+.page{position:relative;z-index:1;min-height:100vh;display:none;flex-direction:column;align-items:center;padding:60px 24px 48px}
 .header{text-align:center;margin-bottom:56px}
 .eyebrow{font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:14px}
 .header h1{font-size:36px;font-weight:900;color:#fff;line-height:1.2;margin-bottom:12px;letter-spacing:-.02em}
@@ -44,7 +59,21 @@ body{font-family:'Noto Sans KR',sans-serif;background:#0F172A;min-height:100vh}
 </head>
 <body>
 <div class="bg"></div>
-<div class="page">
+
+<!-- 비밀번호 화면 -->
+<div class="lock-screen" id="lockScreen">
+  <div class="lock-box">
+    <div class="lock-icon">🔒</div>
+    <h2>중계JLS 운영 대시보드</h2>
+    <p>접근 권한이 필요합니다<br>비밀번호를 입력해주세요</p>
+    <input class="pw-input" type="password" id="pwInput" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter')checkPw()">
+    <button class="pw-btn" onclick="checkPw()">입장하기</button>
+    <div class="pw-error" id="pwError">비밀번호가 올바르지 않습니다</div>
+  </div>
+</div>
+
+<!-- 메인 화면 -->
+<div class="page" id="mainPage">
   <div class="header">
     <div class="eyebrow">Operations Center</div>
     <h1>중계JLS<br><span>운영 대시보드</span></h1>
@@ -103,5 +132,29 @@ body{font-family:'Noto Sans KR',sans-serif;background:#0F172A;min-height:100vh}
     문의사항은 담당자에게 연락해주세요
   </div>
 </div>
+
+<script>
+// ⬇️ 여기 비밀번호를 원하는 것으로 바꾸세요
+var PASSWORD = '0420';
+
+function checkPw(){
+  var input = document.getElementById('pwInput').value;
+  if(input === PASSWORD){
+    document.getElementById('lockScreen').style.display = 'none';
+    document.getElementById('mainPage').style.display = 'flex';
+    sessionStorage.setItem('auth','ok');
+  } else {
+    document.getElementById('pwError').style.display = 'block';
+    document.getElementById('pwInput').value = '';
+    document.getElementById('pwInput').focus();
+  }
+}
+
+// 이미 로그인된 경우 바로 통과
+if(sessionStorage.getItem('auth') === 'ok'){
+  document.getElementById('lockScreen').style.display = 'none';
+  document.getElementById('mainPage').style.display = 'flex';
+}
+</script>
 </body>
 </html>
