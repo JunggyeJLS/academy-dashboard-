@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>어학원 대시보드</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR',sans-serif;background:#F0F4F8;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px}
+.wrap{width:100%;max-width:760px}
+.header{text-align:center;margin-bottom:40px}
+.header h1{font-size:26px;font-weight:700;color:#1E3A5F;margin-bottom:8px}
+.header p{font-size:14px;color:#64748B}
+.section-title{font-size:12px;font-weight:700;color:#94A3B8;letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px;margin-top:28px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.card{background:#fff;border-radius:16px;border:1.5px solid #E2E8F0;padding:24px 20px;text-decoration:none;display:flex;align-items:center;gap:18px;transition:all .2s;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.card:hover{border-color:#2E6DA4;box-shadow:0 6px 20px rgba(46,109,164,.12);transform:translateY(-2px)}
+.card.disabled{opacity:.45;cursor:not-allowed;pointer-events:none}
+.icon{width:50px;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.ic-blue{background:#EBF3FF}
+.ic-green{background:#E8F5E9}
+.ic-orange{background:#FFF3E0}
+.ic-purple{background:#F3E5F5}
+.ic-teal{background:#E0F2F1}
+.info h2{font-size:14px;font-weight:700;color:#1A202C;margin-bottom:3px}
+.info p{font-size:11px;color:#64748B;line-height:1.5}
+.badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;margin-top:5px}
+.badge-live{background:#E8F5E9;color:#2E7D32}
+.badge-soon{background:#FFF3E0;color:#E65100}
+.footer{text-align:center;margin-top:36px;font-size:12px;color:#94A3B8}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <h1>🏫 어학원 대시보드</h1>
+    <p>업무 현황을 한눈에 확인하세요</p>
+  </div>
+
+  <div class="section-title">📊 상담 관리</div>
+  <div class="grid">
+    <a class="card" href="상담모니터링_최종.html">
+      <div class="icon ic-blue">📊</div>
+      <div class="info">
+        <h2>상담 모니터링</h2>
+        <p>해피콜 · 상담콜 · 진급콜<br>선생님별 달성률 현황</p>
+        <span class="badge badge-live">● 운영중</span>
+      </div>
+    </a>
+    <a class="card disabled" href="online-completion.html">
+      <div class="icon ic-purple">📈</div>
+      <div class="info">
+        <h2>온라인 이수율</h2>
+        <p>온라인 강의 수강 현황 및 이수율</p>
+        <span class="badge badge-soon">준비중</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="section-title">🚌 셔틀 관리</div>
+  <div class="grid">
+    <a class="card" href="shuttle_timetable_202606.html">
+      <div class="icon ic-green">🚌</div>
+      <div class="info">
+        <h2>셔틀 시간표</h2>
+        <p>중계분원 셔틀 운행 시간표</p>
+        <span class="badge badge-live">● 운영중</span>
+      </div>
+    </a>
+    <a class="card" href="SHUTTLEFINDER_20260608.html">
+      <div class="icon ic-orange">🔍</div>
+      <div class="info">
+        <h2>셔틀 파인더</h2>
+        <p>중계정상어학원 정류장 검색 및 탑승 안내</p>
+        <span class="badge badge-live">● 운영중</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="footer">기준일 2026.06.08 · 중계정상어학원</div>
+</div>
+</body>
+</html>
