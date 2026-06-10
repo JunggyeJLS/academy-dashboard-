@@ -1180,6 +1180,12 @@ function resetAll(){
 
 // 카카오 로드뷰
 let rvInstance = null;
+let kakaoLoaded = false;
+
+window.kakaoMapLoaded = function() {
+  kakaoLoaded = true;
+  console.log('카카오맵 로드 완료!');
+}
 
 function openRV(lat, lng, title) {
   document.getElementById('rvModal').classList.add('show');
@@ -1189,10 +1195,10 @@ function openRV(lat, lng, title) {
   const container = document.getElementById('rvContainer');
   container.style.width = '100%';
   container.style.height = '300px';
-  container.innerHTML = '';
 
-  setTimeout(function() {
+  function initRV() {
     try {
+      container.innerHTML = '';
       const position = new kakao.maps.LatLng(lat, lng);
       rvInstance = new kakao.maps.Roadview(container);
       const client = new kakao.maps.RoadviewClient();
@@ -1204,9 +1210,23 @@ function openRV(lat, lng, title) {
         }
       });
     } catch(e) {
-      container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:300px;color:#666;font-size:13px;">로드뷰 로딩 오류: ' + e.message + '</div>';
+      container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:300px;color:#666;font-size:13px;">오류: ' + e.message + '</div>';
     }
-  }, 300);
+  }
+
+  // kakao 객체 준비될 때까지 대기
+  let attempts = 0;
+  function waitForKakao() {
+    if (typeof kakao !== 'undefined' && kakao.maps) {
+      initRV();
+    } else if (attempts < 20) {
+      attempts++;
+      setTimeout(waitForKakao, 200);
+    } else {
+      container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:300px;color:#666;font-size:13px;">카카오맵 로드 실패. 페이지를 새로고침해주세요.</div>';
+    }
+  }
+  waitForKakao();
 }
 
 function closeRV(e) {
