@@ -5,15 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>중계정상어학원 셔틀 찾기</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=3b856d48a2f59950b7276395406d22fd&libraries=services,roadview&autoload=false"></script>
-<script>
-// autoload=false로 불러온 뒤, 라이브러리(로드뷰 포함)가 완전히 준비된 후에만 kakaoReady를 true로 설정
-// -> 이걸 안 하면 kakao.maps 객체는 존재해도 Roadview 기능이 아직 초기화 전이라 "가끔 안 되는" 현상이 생김
-var kakaoReady = false;
-if (typeof kakao !== 'undefined' && kakao.maps) {
-  kakao.maps.load(function(){ kakaoReady = true; });
-}
-</script>
+<script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=3b856d48a2f59950b7276395406d22fd&libraries=services,roadview"></script>
 <style>
 :root {
   --sky:#e8f4fd;--sky-mid:#bfdffa;--sky-deep:#7ec2f5;
@@ -797,7 +789,9 @@ function openRV(lat,lng,title){
   container.style.width='100%';container.style.height='300px';container.innerHTML='';
   let attempts=0;
   function waitForKakao(){
-    if(kakaoReady&&typeof kakao!=='undefined'&&kakao.maps&&kakao.maps.Roadview&&kakao.maps.RoadviewClient){
+    // kakao.maps는 먼저 생기고, Roadview 관련 클래스는 조금 늦게 준비될 수 있어서
+    // 두 클래스가 실제로 존재하는지까지 확인 (이게 없으면 가끔 로드뷰만 실패하는 원인이 됨)
+    if(typeof kakao!=='undefined'&&kakao.maps&&kakao.maps.Roadview&&kakao.maps.RoadviewClient){
       try{
         const position=new kakao.maps.LatLng(lat,lng);
         rvInstance=new kakao.maps.Roadview(container);
@@ -807,7 +801,7 @@ function openRV(lat,lng,title){
           else{container.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:300px;color:#666;font-size:13px;">이 위치의 로드뷰를 찾을 수 없어요 😢</div>';}
         });
       }catch(e){container.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:300px;color:#666;font-size:13px;">오류: '+e.message+'</div>';}
-    } else if(attempts<20){attempts++;setTimeout(waitForKakao,200);}
+    } else if(attempts<40){attempts++;setTimeout(waitForKakao,200);}
     else{container.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:300px;color:#666;font-size:13px;">카카오맵 로드 실패. 새로고침해주세요.</div>';}
   }
   waitForKakao();
