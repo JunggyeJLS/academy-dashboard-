@@ -5,7 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>중계정상어학원 셔틀 찾기</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=3b856d48a2f59950b7276395406d22fd&libraries=services,roadview"></script>
+<script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=3b856d48a2f59950b7276395406d22fd&libraries=services,roadview&autoload=false"></script>
+<script>
+// autoload=false로 불러온 뒤, 라이브러리(로드뷰 포함)가 완전히 준비된 후에만 kakaoReady를 true로 설정
+// -> 이걸 안 하면 kakao.maps 객체는 존재해도 Roadview 기능이 아직 초기화 전이라 "가끔 안 되는" 현상이 생김
+var kakaoReady = false;
+if (typeof kakao !== 'undefined' && kakao.maps) {
+  kakao.maps.load(function(){ kakaoReady = true; });
+}
+</script>
 <style>
 :root {
   --sky:#e8f4fd;--sky-mid:#bfdffa;--sky-deep:#7ec2f5;
@@ -200,7 +208,7 @@ footer{text-align:center;padding:20px 16px;font-size:11px;color:var(--text-light
   <div class="card">
     <div class="card-eyebrow">Smart Search</div>
     <div class="card-title">내 주변 정류장 바로 찾기</div>
-    <div class="card-hint">아파트 · 학교 · 역 · 건물 이름으로 검색하면 근처 정류장을 바로 찾아드려요</div>
+    <div class="card-hint">아파트 · 학교 · 역 · 건물 이름으로 검색하고 정류장을 선택하면 요일/코드를 안 골라도 바로 결과를 보여드려요 (필요하면 아래에서 요일·코드를 바꿀 수 있어요)</div>
     <div class="search-inp-wrap">
       <svg class="inp-ico" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
       <input class="search-inp" type="text" id="kwSearch" placeholder="예: 덕암초, 마들역, 롯데캐슬, 중계동..." oninput="searchKeyword(this.value)">
@@ -524,6 +532,7 @@ const timeLabels={"14:30":"1코드 (14:30)","15:50":"2코드 (15:50)","17:30":"3
 let sel={day:null,time:null,busKey:null,stopIdx:null};
 let currentTab='dong';
 let allStopBtns=[];
+let stopBtnMap={};
 
 function switchTab(tab){
   currentTab=tab;
@@ -566,10 +575,38 @@ function selectFromSearch(busKey,stopIdx){
   document.getElementById("kwSearch").value="";
   document.getElementById("kwResults").classList.remove("show");
   document.getElementById("kwResults").innerHTML="";
-  if(!sel.day||!sel.time){sel.busKey=busKey;sel.stopIdx=stopIdx;alert("요일과 수업 코드를 먼저 선택해주세요!");return;}
+
   sel.busKey=busKey;sel.stopIdx=stopIdx;
-  allStopBtns.forEach(b=>b.classList.remove("selected"));
-  showResult();setProgress(4);
+
+  // 요일/코드를 아직 안 골랐으면 기본값(월·수·금 1코드)으로 자동 설정해서 바로 결과를 보여줌
+  // (사용자가 필요하면 아래 Step 01/02에서 바로 바꿀 수 있음)
+  if(!sel.day){
+    sel.day="mwf";
+    const dayBtn=document.querySelector('[data-day="mwf"]');
+    document.querySelectorAll("[data-day]").forEach(b=>b.classList.toggle("selected",b===dayBtn));
+  }
+  if(!sel.time){
+    const times=sel.day==="mwf"?["14:30","15:50","17:30","19:10"]:["15:40","18:20"];
+    sel.time=times[0];
+  }
+
+  buildTimeSec();
+  document.querySelectorAll("#timeChoices .time-btn").forEach(b=>b.classList.toggle("selected",b.dataset.time===sel.time));
+  buildStopSec();
+  openAndHighlightStop(busKey,stopIdx);
+
+  setProgress(4);
+  showResult();
+}
+
+function openAndHighlightStop(busKey,stopIdx){
+  const btn=stopBtnMap[busKey+"_"+stopIdx];
+  if(!btn) return;
+  const group=btn.closest(".bus-group");
+  const hd=group?group.querySelector(".bus-hd"):null;
+  const bd=group?group.querySelector(".bus-bd"):null;
+  if(hd&&bd){hd.classList.add("open");bd.classList.add("open");}
+  allStopBtns.forEach(x=>x.classList.toggle("selected",x===btn));
 }
 
 function setProgress(step){
@@ -584,7 +621,8 @@ function setProgress(step){
 
 document.querySelectorAll("[data-day]").forEach(btn=>{
   btn.addEventListener("click",()=>{
-    sel.day=btn.dataset.day;sel.time=null;sel.busKey=null;sel.stopIdx=null;
+    // 검색으로 이미 골라둔 정류장(sel.busKey/stopIdx)은 요일을 바꿔도 유지한다
+    sel.day=btn.dataset.day;sel.time=null;
     document.querySelectorAll("[data-day]").forEach(b=>b.classList.toggle("selected",b===btn));
     buildTimeSec();setProgress(2);
     document.getElementById("sec3").classList.add("hidden");
@@ -597,13 +635,21 @@ function buildTimeSec(){
   const c=document.getElementById("timeChoices");c.innerHTML="";
   times.forEach(t=>{
     const parts=timeLabels[t].split(" (");
-    const b=document.createElement("button");b.className="time-btn";
+    const b=document.createElement("button");b.className="time-btn";b.dataset.time=t;
     b.innerHTML=`<div class="time-code">${parts[0]}</div><div class="time-val">${parts[1].replace(")","")}</div>`;
     b.addEventListener("click",()=>{
-      sel.time=t;sel.busKey=null;sel.stopIdx=null;
+      // 검색으로 이미 골라둔 정류장이 있으면 그대로 유지하고, 코드 선택과 동시에 결과를 바로 보여준다
+      const keepStop=sel.busKey!==null&&sel.stopIdx!==null;
+      sel.time=t;
       document.querySelectorAll("#timeChoices .time-btn").forEach(x=>x.classList.toggle("selected",x===b));
-      buildStopSec();setProgress(3);
-      document.getElementById("resultArea").classList.add("hidden");
+      buildStopSec();
+      if(keepStop){
+        openAndHighlightStop(sel.busKey,sel.stopIdx);
+        showResult();setProgress(4);
+      } else {
+        setProgress(3);
+        document.getElementById("resultArea").classList.add("hidden");
+      }
     });
     c.appendChild(b);
   });
@@ -611,7 +657,7 @@ function buildTimeSec(){
 }
 
 function buildStopSec(){
-  const c=document.getElementById("stopChoices");c.innerHTML="";allStopBtns=[];
+  const c=document.getElementById("stopChoices");c.innerHTML="";allStopBtns=[];stopBtnMap={};
   ["bus1","bus2","bus3","bus5","bus6","bus7","bus8","bus9"].forEach(key=>{
     const bus=buses[key];
     const tdata=bus[currentTab].times;
@@ -630,7 +676,7 @@ function buildStopSec(){
         allStopBtns.forEach(x=>x.classList.toggle("selected",x===b));
         showResult();setProgress(4);
       });
-      bd.appendChild(b);allStopBtns.push(b);
+      bd.appendChild(b);allStopBtns.push(b);stopBtnMap[key+"_"+idx]=b;
     });
     group.appendChild(hd);group.appendChild(bd);c.appendChild(group);
   });
@@ -751,7 +797,7 @@ function openRV(lat,lng,title){
   container.style.width='100%';container.style.height='300px';container.innerHTML='';
   let attempts=0;
   function waitForKakao(){
-    if(typeof kakao!=='undefined'&&kakao.maps){
+    if(kakaoReady&&typeof kakao!=='undefined'&&kakao.maps&&kakao.maps.Roadview&&kakao.maps.RoadviewClient){
       try{
         const position=new kakao.maps.LatLng(lat,lng);
         rvInstance=new kakao.maps.Roadview(container);
