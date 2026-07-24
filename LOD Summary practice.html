@@ -119,9 +119,11 @@
   .print-sub { font-size: 11px; color: #666; margin-bottom: 14px; }
 
   @media print {
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     body * { visibility: hidden; }
     #printArea, #printArea * { visibility: visible; }
     #printArea { display: block; position: absolute; left: 0; top: 0; width: 100%; padding: 0 10px; }
+    #printArea .card { page-break-inside: avoid; box-shadow: none; }
   }
 </style>
 </head>
@@ -326,30 +328,50 @@ function buildStoryPrintArea(showAnswers) {
   const ratio = difficultySelect.value === 'fixed' ? 'fixed' : parseFloat(difficultySelect.value);
   const blanksArr = getPrintBlanks(storyIdx, ratio);
 
-  let html = '<div class="print-title">' + story.code + '. ' + story.title + '</div>';
-  html += '<div class="print-sub">' + (showAnswers ? '정답지 (Answer Key)' : '이름: ______________   날짜: ______________') + '</div>';
+  printArea.innerHTML = '';
+
+  const title = document.createElement('div');
+  title.className = 'print-title';
+  title.textContent = story.code + '. ' + story.title;
+  printArea.appendChild(title);
+
+  const sub = document.createElement('div');
+  sub.className = 'print-sub';
+  sub.textContent = showAnswers ? '정답지 (Answer Key)' : '이름: ______________   날짜: ______________';
+  printArea.appendChild(sub);
 
   story.questions.forEach((q, qi) => {
     const blankSet = blanksArr[qi];
-    html += '<div class="print-q">';
-    html += '<div class="print-qnum">Q' + (qi + 1) + '. ' + escapeHtml(q.q) + '</div>';
-    html += '<div class="print-answer">';
+
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    const qnum = document.createElement('div');
+    qnum.className = 'qnum';
+    qnum.textContent = story.code + ' · Q' + (qi + 1);
+    card.appendChild(qnum);
+
+    const qtext = document.createElement('div');
+    qtext.className = 'qtext';
+    qtext.textContent = q.q;
+    card.appendChild(qtext);
+
+    const answer = document.createElement('div');
+    answer.className = 'answer';
     q.tokens.forEach((tok, i) => {
       if (blankSet.has(i)) {
-        if (showAnswers) {
-          html += '<span class="print-blank-answer">' + escapeHtml(tok.t) + '</span>';
-        } else {
-          const width = Math.max(50, tok.t.length * 10);
-          html += '<span class="print-blank-line" style="width:' + width + 'px;">&nbsp;</span>';
-        }
+        const span = document.createElement('span');
+        span.className = 'blank' + (showAnswers ? ' revealed' : '');
+        span.textContent = tok.t;
+        span.style.minWidth = Math.max(40, tok.t.length * 13) + 'px';
+        answer.appendChild(span);
       } else {
-        html += escapeHtml(tok.t);
+        answer.appendChild(document.createTextNode(tok.t));
       }
     });
-    html += '</div></div>';
+    card.appendChild(answer);
+    printArea.appendChild(card);
   });
-
-  printArea.innerHTML = html;
 }
 
 document.getElementById('reshuffleBtn').onclick = () => {
